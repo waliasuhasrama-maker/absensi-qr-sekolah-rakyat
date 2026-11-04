@@ -132,6 +132,33 @@ import {
       hasil.textContent = "QR TERBACA:\n" + teks;
     }
 
+    
+async function periksaPetugas(user) {
+  try {
+    const referensi = doc(db, "petugas", user.uid);
+    const hasil = await getDoc(referensi);
+
+    if (!hasil.exists()) {
+      return null;
+    }
+
+    const petugas = hasil.data();
+
+    if (
+      petugas.status !== "AKTIF" ||
+      petugas.email.toLowerCase() !==
+        (user.email || "").toLowerCase()
+    ) {
+      return null;
+    }
+
+    return petugas;
+  } catch (error) {
+    console.error("Verifikasi petugas gagal:", error);
+    return null;
+  }
+}
+
     function mulaiScanner() {
       if (scanner) return;
 
@@ -152,7 +179,47 @@ import {
       pesan.textContent = "Login gagal: " + error.code;
     });
 
-    onAuthStateChanged(auth, async user => {
+    
+onAuthStateChanged(auth, async user => {
+  if (scanner) {
+    await scanner.clear().catch(() => {});
+    scanner = null;
+  }
+
+  document.getElementById("reader").innerHTML = "";
+  aplikasi.classList.add("hidden");
+  login.classList.add("hidden");
+
+  if (!user) {
+    login.classList.remove("hidden");
+    profil.textContent = "";
+    hasil.textContent = "Silakan aktifkan kamera.";
+    pesan.textContent = "";
+    return;
+  }
+
+  pesan.textContent = "Memeriksa izin petugas...";
+
+  const petugas = await periksaPetugas(user);
+
+  // Abaikan hasil jika akun sudah berubah
+  if (auth.currentUser?.uid !== user.uid) return;
+
+  if (!petugas) {
+    pesan.textContent =
+      "AKSES DITOLAK: Akun tidak terdaftar atau tidak aktif.";
+    return;
+  }
+
+  profil.textContent =
+    "Petugas: " + petugas.nama +
+    "\nEmail: " + petugas.email;
+
+  pesan.textContent = "";
+  aplikasi.classList.remove("hidden");
+  mulaiScanner();
+});
+
       if (user) {
         login.classList.add("hidden");
         aplikasi.classList.remove("hidden");
