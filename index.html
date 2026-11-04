@@ -143,6 +143,13 @@ async function periksaPetugas(user) {
     }
 
     const petugas = hasil.data();
+    console.log("DATA PETUGAS FIRESTORE:", petugas);
+    console.log("STATUS COCOK:", petugas.status === "AKTIF");
+    console.log(
+     "EMAIL COCOK:",
+      String(petugas.email || "").toLowerCase() ===
+      String(user.email || "").toLowerCase()
+);
 
     if (
       petugas.status !== "AKTIF" ||
