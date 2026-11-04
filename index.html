@@ -220,26 +220,10 @@ onAuthStateChanged(auth, async user => {
   mulaiScanner();
 });
 
-      if (user) {
-        login.classList.add("hidden");
-        aplikasi.classList.remove("hidden");
-        profil.textContent =
-          "Petugas: " + (user.displayName || "-") +
-          "\nEmail: " + (user.email || "-");
-        pesan.textContent = "";
-        mulaiScanner();
-      } else {
-        if (scanner) {
-          await scanner.clear().catch(() => {});
-          scanner = null;
-        }
-        document.getElementById("reader").innerHTML = "";
-        aplikasi.classList.add("hidden");
-        login.classList.remove("hidden");
-        profil.textContent = "";
-        hasil.textContent = "Silakan aktifkan kamera.";
-      }
-    });
-  </script>
+       pesan.textContent = "";
+  aplikasi.classList.remove("hidden");
+  mulaiScanner();
+});
+</script>
 </body>
 </html>
