@@ -4,10 +4,46 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Absensi QR Sekolah Rakyat</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      text-align: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 450px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+    }
+    #reader { width: 100%; }
+    #hasil { margin-top: 15px; font-weight: bold; }
+  </style>
 </head>
-<body style="font-family:Arial;text-align:center;padding:30px">
-  <h2>ABSENSI QR SISWA</h2>
-  <p>Sekolah Rakyat</p>
-  <p>Halaman aplikasi berhasil dibuat.</p>
+<body>
+  <div class="container">
+    <h2>ABSENSI QR SISWA</h2>
+    <p>Sekolah Rakyat</p>
+    <div id="reader"></div>
+    <p id="hasil">Silakan aktifkan kamera.</p>
+  </div>
+
+  <script>
+    function bacaQR(teks) {
+      document.getElementById("hasil").innerText =
+        "QR TERBACA:\n" + teks;
+    }
+
+    const scanner = new Html5QrcodeScanner(
+      "reader",
+      { fps: 10, qrbox: 220 },
+      false
+    );
+
+    scanner.render(bacaQR);
+  </script>
 </body>
 </html>
