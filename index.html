@@ -84,8 +84,16 @@
       appId: "1:492315437468:web:88082496c94f3066564059"
     };
 
+    
+import {
+  getFirestore,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
     const login = document.getElementById("login");
