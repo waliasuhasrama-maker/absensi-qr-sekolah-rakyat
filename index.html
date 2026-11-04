@@ -200,6 +200,8 @@ onAuthStateChanged(auth, async user => {
 
   pesan.textContent = "Memeriksa izin petugas...";
 
+  console.log("EMAIL AKUN LOGIN:", user.email);
+  console.log("UID AKUN LOGIN:", user.uid);
   const petugas = await periksaPetugas(user);
 
   // Abaikan hasil jika akun sudah berubah
