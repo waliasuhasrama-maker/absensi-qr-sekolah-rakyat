@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Absensi QR Sekolah Rakyat</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -19,31 +19,152 @@
       padding: 20px;
       border-radius: 15px;
     }
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 8px;
+    }
     #reader { width: 100%; }
-    #hasil { margin-top: 15px; font-weight: bold; }
+    #hasil {
+      margin-top: 15px;
+      font-weight: bold;
+      overflow-wrap: anywhere;
+    }
+    #profil { overflow-wrap: anywhere; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>ABSENSI QR SISWA</h2>
     <p>Sekolah Rakyat</p>
-    <div id="reader"></div>
-    <p id="hasil">Silakan aktifkan kamera.</p>
+
+    <div id="login">
+      <p>Silakan masuk menggunakan akun Google.</p>
+      <button id="btnLogin">Login dengan Google</button>
+    </div>
+
+    <div id="aplikasi" class="hidden">
+      <p id="profil"></p>
+      <button id="btnLogout">Keluar</button>
+      <h3>Scan QR Siswa</h3>
+      <div id="reader"></div>
+      <p id="hasil">Silakan aktifkan kamera.</p>
+    </div>
+
+    <p id="pesan"></p>
   </div>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from
+      "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signInWithRedirect,
+      getRedirectResult,
+      signOut,
+      onAuthStateChanged
+    } from
+      "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBKG8FArLe1qQ_wmchHepfJx8urtY7qULI",
+      authDomain: "absensi-qr-sekolah-rakyat.firebaseapp.com",
+      projectId: "absensi-qr-sekolah-rakyat",
+      storageBucket: "absensi-qr-sekolah-rakyat.firebasestorage.app",
+      messagingSenderId: "492315437468",
+      appId: "1:492315437468:web:88082496c94f3066564059"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    const login = document.getElementById("login");
+    const aplikasi = document.getElementById("aplikasi");
+    const profil = document.getElementById("profil");
+    const hasil = document.getElementById("hasil");
+    const pesan = document.getElementById("pesan");
+
+    let scanner = null;
+
+    document.getElementById("btnLogin").onclick = async () => {
+      pesan.textContent = "Memproses login...";
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        if (
+          error.code === "auth/popup-blocked" ||
+          error.code === "auth/operation-not-supported-in-this-environment"
+        ) {
+          await signInWithRedirect(auth, provider);
+          return;
+        }
+        pesan.textContent = "Login gagal: " + error.code;
+      }
+    };
+
+    document.getElementById("btnLogout").onclick = async () => {
+      if (scanner) {
+        await scanner.clear().catch(() => {});
+        scanner = null;
+      }
+      await signOut(auth);
+    };
+
     function bacaQR(teks) {
-      document.getElementById("hasil").innerText =
-        "QR TERBACA:\n" + teks;
+      hasil.textContent = "QR TERBACA:\n" + teks;
     }
 
-    const scanner = new Html5QrcodeScanner(
-      "reader",
-      { fps: 10, qrbox: 220 },
-      false
-    );
+    function mulaiScanner() {
+      if (scanner) return;
 
-    scanner.render(bacaQR);
+      if (typeof Html5QrcodeScanner === "undefined") {
+        hasil.textContent = "Pustaka kamera gagal dimuat.";
+        return;
+      }
+
+      scanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: 220 },
+        false
+      );
+      scanner.render(bacaQR);
+    }
+
+    getRedirectResult(auth).catch(error => {
+      pesan.textContent = "Login gagal: " + error.code;
+    });
+
+    onAuthStateChanged(auth, async user => {
+      if (user) {
+        login.classList.add("hidden");
+        aplikasi.classList.remove("hidden");
+        profil.textContent =
+          "Petugas: " + (user.displayName || "-") +
+          "\nEmail: " + (user.email || "-");
+        pesan.textContent = "";
+        mulaiScanner();
+      } else {
+        if (scanner) {
+          await scanner.clear().catch(() => {});
+          scanner = null;
+        }
+        document.getElementById("reader").innerHTML = "";
+        aplikasi.classList.add("hidden");
+        login.classList.remove("hidden");
+        profil.textContent = "";
+        hasil.textContent = "Silakan aktifkan kamera.";
+      }
+    });
   </script>
 </body>
 </html>
