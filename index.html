@@ -136,11 +136,15 @@ import {
 async function periksaPetugas(user) {
   try {
     const referensi = doc(db, "petugas", user.uid);
-    const hasil = await getDoc(referensi);
+   
+const hasil = await getDoc(referensi);
 
-    if (!hasil.exists()) {
-      return null;
-    }
+console.log("DOKUMEN PETUGAS DITEMUKAN:", hasil.exists());
+
+if (!hasil.exists()) {
+  return null;
+}
+
 
     const petugas = hasil.data();
     console.log("DATA PETUGAS FIRESTORE:", petugas);
