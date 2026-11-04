@@ -145,6 +145,12 @@ if (!hasil.exists()) {
   return null;
 }
 
+console.log("DOKUMEN PETUGAS DITEMUKAN:", hasil.exists());
+
+if (!hasil.exists()) {
+  return null;
+}
+
 
     const petugas = hasil.data();
     console.log("DATA PETUGAS FIRESTORE:", petugas);
