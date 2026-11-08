@@ -106,6 +106,7 @@ import {
     const pesan = document.getElementById("pesan");
 
     let scanner = null;
+    let sedangMemproses = false;
 
     document.getElementById("btnLogin").onclick = async () => {
       pesan.textContent = "Memproses login...";
@@ -132,18 +133,37 @@ import {
     };
 
     
-function bacaQR(teks) {
+async function bacaQR(teks) {
+  if (sedangMemproses) return;
+
   const hasilID = String(teks).match(/(?:^|[?&])entry\.\d+=(SR\d+)(?:&|$)/i);
+
   const id = hasilID
     ? hasilID[1].toUpperCase()
     : (/^SR\d+$/i.test(String(teks).trim())
         ? String(teks).trim().toUpperCase()
         : null);
 
-  hasil.textContent = id
-    ? "ID SISWA TERBACA:\n" + id
-    : "QR tidak dikenali.";
+  if (!id) {
+    hasil.textContent = "QR tidak dikenali.";
+    return;
+  }
+
+  sedangMemproses = true;
+  hasil.textContent = "ID SISWA: " + id + "\nMemproses absensi...";
+
+  try {
+    await simpanAbsensi(id, "MASUK");
+    hasil.textContent = "Absensi MASUK berhasil: " + id;
+  } catch (error) {
+    hasil.textContent = "Gagal menyimpan: " + error.message;
+  } finally {
+    setTimeout(() => {
+      sedangMemproses = false;
+    }, 10000);
+  }
 }
+
 async function simpanAbsensi(id, jenisAbsensi) {
   const user = auth.currentUser;
 
