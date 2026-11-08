@@ -128,10 +128,19 @@ import {
       await signOut(auth);
     };
 
-    function bacaQR(teks) {
-      hasil.textContent = "QR TERBACA:\n" + teks;
-    }
+    
+function bacaQR(teks) {
+  const hasilID = String(teks).match(/(?:^|[?&])entry\.\d+=(SR\d+)(?:&|$)/i);
+  const id = hasilID
+    ? hasilID[1].toUpperCase()
+    : (/^SR\d+$/i.test(String(teks).trim())
+        ? String(teks).trim().toUpperCase()
+        : null);
 
+  hasil.textContent = id
+    ? "ID SISWA TERBACA:\n" + id
+    : "QR tidak dikenali.";
+}
     
 async function periksaPetugas(user) {
   try {
