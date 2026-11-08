@@ -144,7 +144,22 @@ function bacaQR(teks) {
     ? "ID SISWA TERBACA:\n" + id
     : "QR tidak dikenali.";
 }
-    
+async function simpanAbsensi(id, jenisAbsensi) {
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error("Petugas belum login.");
+  }
+
+    await addDoc(collection(db, "absensi"), {
+    idSiswa: id,
+    jenisAbsensi: jenisAbsensi,
+    waktu: serverTimestamp(),
+    uidPetugas: user.uid
+  });
+
+  return true;
+}    
 async function periksaPetugas(user) {
   try {
     const referensi = doc(db, "petugas", user.uid);
