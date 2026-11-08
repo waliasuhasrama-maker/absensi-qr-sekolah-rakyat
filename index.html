@@ -154,8 +154,8 @@ async function bacaQR(teks) {
   hasil.textContent = "ID SISWA: " + id + "\nMemproses absensi...";
 
   try {
-    await simpanAbsensi(id, "MASUK");
-    hasil.textContent = "Absensi MASUK berhasil: " + id;
+    const status = await simpanAbsensi(id);
+    hasil.textContent = "Absensi " + status + " berhasil: " + id;
   } catch (error) {
     hasil.textContent = "Gagal menyimpan: " + error.message;
   } finally {
@@ -165,22 +165,67 @@ async function bacaQR(teks) {
   }
 }
 
-async function simpanAbsensi(id, jenisAbsensi) {
+async function simpanAbsensi(id) {
   const user = auth.currentUser;
 
   if (!user) {
     throw new Error("Petugas belum login.");
   }
 
-    await addDoc(collection(db, "absensi"), {
-    idSiswa: id,
-    jenisAbsensi: jenisAbsensi,
-    waktu: serverTimestamp(),
-    uidPetugas: user.uid
-  });
+  const bagianTanggal = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Jakarta",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit"
+}).formatToParts(new Date());
 
-  return true;
-}    
+const ambil = (tipe) =>
+  bagianTanggal.find(bagian => bagian.type === tipe).value;
+
+const tanggal =
+  ambil("year") + "-" + ambil("month") + "-" + ambil("day");
+
+  const statusRef = doc(db, "status_harian", tanggal + "_" + id);
+  const logRef = doc(collection(db, "absensi"));
+  const logId = logRef.id;
+
+  return await runTransaction(db, async (transaksi) => {
+    const snapshot = await transaksi.get(statusRef);
+    const sebelumnya = snapshot.exists() ? snapshot.data() : null;
+
+    const sekarang = new Date();
+    const waktuLama = sebelumnya?.waktuTerakhir?.toDate?.();
+
+    if (waktuLama &&
+        sekarang.getTime() - waktuLama.getTime() < 10000) {
+      throw new Error("QR baru dipindai. Tunggu 10 detik.");
+    }
+
+    const status = sebelumnya?.status === "MASUK"
+      ? "KELUAR"
+      : "MASUK";
+
+    transaksi.set(statusRef, {
+      idSiswa: id,
+      tanggal: tanggal,
+      status: status,
+      logId: logId,
+      waktuTerakhir: serverTimestamp(),
+      uidPetugas: user.uid
+    });
+
+    transaksi.set(logRef, {
+      idSiswa: id,
+      jenisAbsensi: status,
+      logId: logId,
+      waktu: serverTimestamp(),
+      uidPetugas: user.uid
+    });
+
+    return status;
+  });
+}
+    
 async function periksaPetugas(user) {
   try {
     const referensi = doc(db, "petugas", user.uid);
